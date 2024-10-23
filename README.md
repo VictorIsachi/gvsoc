@@ -36,20 +36,17 @@ export CMAKE=cmake-3.18.1
 
 Follow these steps to set up the SoftHier simulation environment:
 
-1. **Clone the repository, setup environment** and navigate into the project directory:
+1. **Clone the repository** and navigate into the project directory:
 
    ```bash
    git clone git@github.com:VictorIsachi/gvsoc.git -b vi/redmule_mesh redmule_mesh
    cd redmule_mesh
-   source env_setup.sh
    ```
 
-2. **Set up the toolchain** by exporting the necessary environment variables (adjust the versions as needed):
+2. **Set up the environment** by exporting the necessary environment variables (adjust the versions as needed):
 
    ```bash
-   export CXX=g++-11.2.0
-   export CC=gcc-11.2.0
-   export CMAKE=cmake-3.18.1
+   source env_setup.sh
    ```
 
 3. **Initialize the simulator environment** by running:
