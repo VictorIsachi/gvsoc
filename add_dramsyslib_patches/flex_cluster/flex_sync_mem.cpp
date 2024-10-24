@@ -23,6 +23,12 @@
 #include <vp/itf/wire.hpp>
 #include <stdio.h>
 #include <string.h>
+#include <vector>
+#include <list>
+#include <queue>
+#include <stdlib.h>
+#include <stdint.h>
+#include <cstdint>
 
 class FlexSyncMem : public vp::Component
 {
@@ -38,6 +44,11 @@ public:
     uint32_t  			size;
     uint32_t            special_mem_base;
     uint8_t *    		sync_mem;
+
+    // Needed to handle event modelling
+    std::queue<vp::IoReq *>  denied_req_queue;  // Can also be vp::IoReq * denied_req to store a signle pending request
+    vp::ClockEvent * atomic_rsp_event;  //  Event
+    static void atomic_rsp_event_handler(vp::Block *__this, vp::ClockEvent *event); // Callback to be triggered on event
 };
 
 extern "C" vp::Component *gv_new(vp::ComponentConf &config)
@@ -58,6 +69,11 @@ FlexSyncMem::FlexSyncMem(vp::ComponentConf &config)
     this->special_mem_base = this->get_js_config()->get("special_mem_base")->get_int();
     this->sync_mem = (uint8_t *)calloc(size, 1);
     if (this->sync_mem == NULL) throw std::bad_alloc();
+
+    // Initialize event handling
+    this->atomic_rsp_event = this->event_new(&FlexSyncMem::atomic_rsp_event_handler);   // Bind callback to event
+    // In the case of a signle pending request initialize it to NULL (and put it to NULL each time you finished handling the event):
+    // denied_req = NULL;
 }
 
 vp::IoReqStatus FlexSyncMem::req(vp::Block *__this, vp::IoReq *req)
@@ -93,12 +109,33 @@ vp::IoReqStatus FlexSyncMem::req(vp::Block *__this, vp::IoReq *req)
         if ((is_write == 1))
         {
            *mem_ptr = 0;
+           _this->trace.msg("[FlexSyncMem] amo reset\n");
         } else {
            data[0] = *mem_ptr;
            *mem_ptr = (*mem_ptr) + 1;
+           _this->trace.msg("[FlexSyncMem] amo fetch and add\n");
+           if(_this->denied_req_queue.size() == 0){
+                _this->event_enqueue(_this->atomic_rsp_event, 10); // Enqueue event after 10 cycles
+           }
+           _this->denied_req_queue.push(req);   // Store request (need to do this so it does not get overwritten)
+           return vp::IO_REQ_DENIED;    // Stall sender (OK - accepted; PENDING - handshake but no ack; DENIED - no handshake (stalls source); ERROR - error)
         }
     }
 
     return vp::IO_REQ_OK;
+}
+
+// Event handler
+void FlexSyncMem::atomic_rsp_event_handler(vp::Block *__this, vp::ClockEvent *event) {
+    FlexSyncMem *_this = (FlexSyncMem *)__this;
+
+    vp::IoReq *req = _this->denied_req_queue.front();
+    req->get_resp_port()->grant(req);   // Handshake
+    req->get_resp_port()->resp(req);    // Response/ack
+    _this->denied_req_queue.pop();
+
+    if(_this->denied_req_queue.size() != 0){
+        _this->event_enqueue(_this->atomic_rsp_event, 10);
+    }
 }
 
