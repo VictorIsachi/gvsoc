@@ -1,30 +1,29 @@
 #include "flex_runtime.h"
 #include "kernels/gemm/gemm_systolic_wise.h"
 #include "examples/example_one_cluster_gemm.h"
-#include "sync_test.h"
 #include <math.h>
 
-int main()
-{
-    uint32_t eoc_val = 0;
-    flex_barrier_xy_init();
-    flex_global_barrier_xy();
-    flex_timer_start();
+void sync_test(){
+    uint32_t num_reps = 10;
     /**************************************/
     /*  Program Execution Region -- Start */
     /**************************************/
 
-    // Default test
-    // example_one_cluster_gemm();
-
-    // Sync test
-    sync_test();
+    for (int i = 0; i < num_reps; i++){
+      flex_barrier_xy_init();
+      flex_timer_start();
+      flex_global_barrier_xy();
+      flex_timer_end();
+    }
+    
+    for (int i = 0; i < num_reps; i++){
+      flex_barrier_init();
+      flex_timer_start();
+      flex_global_barrier();
+      flex_timer_end();
+    }
 
     /**************************************/
     /*  Program Execution Region -- Stop  */
     /**************************************/
-    flex_global_barrier_xy();
-    flex_timer_end();
-    flex_eoc(eoc_val);
-	return 0;
 }
