@@ -136,4 +136,4 @@ build_softhier_hw:
 	CXX=g++-11.2.0 CC=gcc-11.2.0 CMAKE=cmake-3.18.1 make TARGETS=pulp.chips.flex_cluster.flex_cluster all
 
 run:
-	./install/bin/gvsoc --target=pulp.chips.flex_cluster.flex_cluster --binary third_party/occamy/target/sim/sw/device/apps/blas/test/build/test.elf run --trace=/chip/cluster_0/redmule
+	./install/bin/gvsoc --target=pulp.chips.flex_cluster.flex_cluster --binary third_party/occamy/target/sim/sw/device/apps/blas/test/build/test.elf run --trace=/chip/cluster_0/redmule --trace=/chip/cluster_0/sync_router --trace=/chip/cluster_0/cluster_registers --trace=/chip/sync_bus --trace=/chip/ctrl_registers --trace=sync_mem
