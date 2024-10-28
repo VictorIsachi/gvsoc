@@ -2,6 +2,7 @@
 #include "kernels/gemm/gemm_systolic_wise.h"
 #include "examples/example_one_cluster_gemm.h"
 #include "sync_test.h"
+#include "gemm_sync_test.h"
 #include <math.h>
 
 int main()
@@ -14,11 +15,15 @@ int main()
     /*  Program Execution Region -- Start */
     /**************************************/
 
-    // Default test
-    // example_one_cluster_gemm();
+    // Default tests
+    example_one_cluster_gemm();
+    // gemm_systolic_wise(1024, 512, 256, 2, 32, 32, 32);
 
     // Sync test
-    sync_test();
+    // sync_test();
+
+    // GEMM Sync test
+    // gemm_sync_test();
 
     /**************************************/
     /*  Program Execution Region -- Stop  */
